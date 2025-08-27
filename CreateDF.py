@@ -10,11 +10,8 @@ def create_DF():
     DIST_SPEND = pd.read_excel('data/2324_DISTRICT_SPEND_PER_PUPIL.xlsx', sheet_name=1,index_col=0)
     DIST_INCOME_TAX = pd.read_excel('data/22_TAX_INCOME.xlsx', sheet_name=1,index_col=3)
     DIST_PROPERTY_TAX = pd.read_excel('data/DIST_PROPERTY_TAX.xlsx', sheet_name=1,index_col=2)
-    # Clean Distric Value Added DF
     DIST_VA = DIST_VA.drop(columns = 'Watermark')
-    # Clean Distric Graduation Rate DF
     DIST_GRAD_RATE = DIST_GRAD_RATE.drop(columns=['District Name','County','Region','Watermark'])
-    # Clean Distric Detail DF
     import pandas as pd
     import numpy as np
     
@@ -24,7 +21,6 @@ def create_DF():
         if data.index.name:
             district_id_col = data.index.name
         else:
-            # Fallback if the index is not named
             district_id_col = 'District ID'
             data.index.name = district_id_col
     
@@ -56,12 +52,12 @@ def create_DF():
     DIST_DETAIL = transform_district_data(DIST_DETAIL)
     DIST_DETAIL.set_index('District IRN', inplace=True)
     DIST_ACHEIVE = DIST_ACHEIVE.drop(columns=['District Name','County','Region','Watermark','Maximum District Performance Index Score 2023-2024'])
-    # Clean District Spend
+
     DIST_SPEND = DIST_SPEND.drop(columns=['District Name','County','Region','Watermark','State-Level Expenditures per Equivalent Pupil','State-Level Expenditures per Equivalent Pupil - Federal Funds','State-Level Expenditures per Equivalent Pupil - State and Local Funds'])
     
     DIST_INCOME_TAX.drop(columns=['COUNTY','SCHOOL DISTRICT','PUN','SCHOOL DISTRICT NUMBER'],inplace=True)
     DIST_PROPERTY_TAX.drop(columns=['County','School District Number','PUN','School District Name','Rank'],inplace=True)
-    # Join Dataframes
+
     combined_df = pd.merge(DIST_VA,DIST_GRAD_RATE, on='District IRN')
     combined_df = pd.merge(combined_df,DIST_DETAIL, on='District IRN')
     combined_df = pd.merge(combined_df,DIST_ACHEIVE, on='District IRN')
@@ -70,7 +66,6 @@ def create_DF():
     combined_df = pd.merge(combined_df,DIST_PROPERTY_TAX, on='District IRN')
     combined_df.drop(48975,inplace=True)
     
-    #convert Numbers
     combined_df['Overall Composite'] = combined_df['Overall Composite'].astype(float)
     combined_df['Overall Effect Size'] = combined_df['Overall Effect Size'].astype(float)
     combined_df['Graduation Rate Component Percent (Weighted Graduation Rate)'] = combined_df['Graduation Rate Component Percent (Weighted Graduation Rate)'].astype(float)
@@ -80,38 +75,29 @@ def create_DF():
     combined_df['Five Year Graduation Rate - Class of 2022'] = combined_df['Five Year Graduation Rate - Class of 2022'].astype(float)
     combined_df['Five Year Graduation Rate Numerator - Class of 2022'] = combined_df['Five Year Graduation Rate Numerator - Class of 2022'].astype(float)
     combined_df['Five Year Graduation Rate Denominator - Class of 2022'] = combined_df['Five Year Graduation Rate Denominator - Class of 2022'].astype(float)
-    #convert Money and Stars
     combined_df['Expenditures per Equivalent Pupil'] = combined_df['Expenditures per Equivalent Pupil'].str.replace(r'[$,€£]', '', regex=True).str.replace(',', '').astype(float)
     combined_df['Expenditures per Equivalent Pupil - Federal Funds'] = combined_df['Expenditures per Equivalent Pupil - Federal Funds'].str.replace(r'[$,€£]', '', regex=True).str.replace(',', '').astype(float)
     combined_df['Expenditures per Equivalent Pupil - State and Local Funds'] = combined_df['Expenditures per Equivalent Pupil - State and Local Funds'].str.replace(r'[$,€£]', '', regex=True).str.replace(',', '').astype(float)
     
-    #Stars
     
     combined_df['Progress Component Star Rating'] = combined_df['Progress Component Star Rating'].str.replace(' Stars','', regex=True).str.replace(' Star','',regex=True).astype(int)
     combined_df['Graduation Rate Component Rating'] = combined_df['Graduation Rate Component Rating'].str.replace(' Stars','', regex=True).str.replace(' Star','',regex=True).astype(int)
     combined_df['Achievement Component Star Rating'] = combined_df['Achievement Component Star Rating'].str.replace(' Stars','', regex=True).str.replace(' Star','',regex=True).astype(int)
     
     
-    # Effective Property Tax Rate
     combined_df['Effective Property Tax Rate'] = (combined_df['Real Property Taxes Charged'] / combined_df['Real Property Taxable Value (a)']) * 100
     
-    # Effective Income Tax Rate
     combined_df['Effective Income Tax Rate'] = (combined_df['TOTAL OHIO INCOME TAX LIABILITY'] / combined_df['TOTAL OHIO INCOME TAX BASE']) * 100
     
-    # Total Local Tax Burden (Overall Local Effective Rate)
     combined_df['Total Local Tax Burden'] = (combined_df['Total Taxes'] / combined_df['Total Value']) * 100
     
-    # Per Capita Income Tax Liability
     combined_df['Per Capita Income Tax Liability'] = combined_df['TOTAL OHIO INCOME TAX LIABILITY'] / combined_df['NUMBER OF RETURNS']
     
-    # Student to Taxpayer Ratio
     combined_df['Student to Taxpayer Ratio'] = combined_df['Total Students'] / combined_df['NUMBER OF RETURNS']
     
-    # Funding Source Percentages
     combined_df['Federal Funding Percentage'] = (combined_df['Expenditures per Equivalent Pupil - Federal Funds'] / combined_df['Expenditures per Equivalent Pupil']) * 100
     combined_df['State and Local Funding Percentage'] = (combined_df['Expenditures per Equivalent Pupil - State and Local Funds'] / combined_df['Expenditures per Equivalent Pupil']) * 100
     
-    # Student Demographic Percentages
     combined_df['Percent of Economically Disadvantaged Students'] = (combined_df['Economic Disadvantage'] / combined_df['Total Students']) * 100
     combined_df['Percent of Students with Disabilities'] = (combined_df['Students with Disabilities'] / combined_df['Total Students']) * 100
     combined_df['Percent of American Indian or Alaskan Native'] = (combined_df['American Indian or Alaskan Native'] / combined_df['Total Students']) * 100
